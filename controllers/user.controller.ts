@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import AccountUser from "../models/account-user.model";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 export const registerPost = async (req: Request, res: Response) => {
   try {
@@ -25,6 +26,65 @@ export const registerPost = async (req: Request, res: Response) => {
     res.json({
       code: "success",
       message: "Đăng ký thành công",
+    });
+  } catch (error) {
+    console.log(error);
+    res.json({
+      code: "error",
+      message: "Đã có lỗi xảy ra",
+    });
+  }
+};
+
+export const loginPost = async (req: Request, res: Response) => {
+  try {
+    const { email, password } = req.body;
+
+    const existAccount = await AccountUser.findOne({
+      email: email,
+    });
+
+    if (!existAccount) {
+      res.json({
+        code: "error",
+        message: "Email không tồn tại",
+      });
+      return;
+    }
+
+    const validPassword = await bcrypt.compare(
+      password,
+      `${existAccount.password}`,
+    );
+
+    if (!validPassword) {
+      res.json({
+        code: "error",
+        message: "Sai mật khẩu",
+      });
+      return;
+    }
+
+    const token = jwt.sign(
+      {
+        id: existAccount._id,
+        email: existAccount.email,
+      },
+      `${process.env.JWT_SECRET_KEY}`,
+      {
+        expiresIn: "3d",
+      },
+    );
+
+    res.cookie("token", token, {
+      maxAge: 1000 * 60 * 60 * 24 * 3, // 3 ngày
+      httpOnly: true, // Chỉ cho phép server truy cập cookie
+      sameSite: "strict", // Chỉ cho phép gửi cùng tên miền
+    });
+
+    res.json({
+      code: "success",
+      message: "Đăng nhập thành công",
     });
   } catch (error) {
     console.log(error);
