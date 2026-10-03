@@ -14,7 +14,8 @@ connectDB();
 // Cấu hình CORS
 app.use(
   cors({
-    origin: "*", // Thay đổi thành địa chỉ của frontend
+    origin: "http://localhost:3000", // Thay đổi thành địa chỉ của frontend
+    credentials: true, // Cho phép gửi cookie từ frontend lên backend
     methods: ["GET", "POST", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
