@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import AccountUser from "../models/account-user.model";
 import jwt from "jsonwebtoken";
+import AccountCompany from "../models/account-company.model";
 
 export const check = async (req: Request, res: Response) => {
   try {
@@ -18,32 +19,59 @@ export const check = async (req: Request, res: Response) => {
       token,
       `${process.env.JWT_SECRET_KEY}`,
     ) as jwt.JwtPayload;
-    const { id, email } = decoded;
+    const { id, email, type } = decoded;
 
-    const existAccount = await AccountUser.findOne({
-      _id: id,
-      email: email,
-    });
-
-    if (!existAccount) {
-      res.clearCookie("token");
-      res.json({
-        code: "error",
-        message: "Tài khoản không tồn tại hoặc đã bị vô hiệu hóa",
+    // Tìm user
+    if (type == "user") {
+      const existAccountUser = await AccountUser.findOne({
+        _id: id,
+        email: email,
       });
-      return;
+
+      if (existAccountUser) {
+        const infoUser = {
+          id: existAccountUser._id,
+          email: existAccountUser.email,
+          fullName: existAccountUser.fullName,
+        };
+
+        res.json({
+          code: "success",
+          message: "Thành công",
+          infoUser: infoUser,
+        });
+        return;
+      }
     }
 
-    const infoUser = {
-      id: existAccount._id,
-      email: existAccount.email,
-      fullName: existAccount.fullName,
-    };
+    // Tìm công ty
+    else if (type == "company") {
+      const existAccountCompany = await AccountCompany.findOne({
+        _id: id,
+        email: email,
+      });
 
+      if (existAccountCompany) {
+        const infoCompany = {
+          id: existAccountCompany._id,
+          email: existAccountCompany.email,
+          companyName: existAccountCompany.companyName,
+        };
+
+        res.json({
+          code: "success",
+          message: "Thành công",
+          infoCompany: infoCompany,
+        });
+        return;
+      }
+    }
+
+    // Nếu lỗi
+    res.clearCookie("token");
     res.json({
-      code: "success",
-      message: "Thành công",
-      infoUser: infoUser,
+      code: "error",
+      message: "Tài khoản không tồn tại hoặc đã bị vô hiệu hóa",
     });
   } catch (error) {
     console.log(error);
