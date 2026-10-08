@@ -33,6 +33,8 @@ export const check = async (req: Request, res: Response) => {
           id: existAccountUser._id,
           email: existAccountUser.email,
           fullName: existAccountUser.fullName,
+          avatar: existAccountUser.avatar,
+          phone: existAccountUser.phone,
         };
 
         res.json({
@@ -56,6 +58,15 @@ export const check = async (req: Request, res: Response) => {
           id: existAccountCompany._id,
           email: existAccountCompany.email,
           companyName: existAccountCompany.companyName,
+          logo: existAccountCompany.logo,
+          city: existAccountCompany.city,
+          address: existAccountCompany.address,
+          companyModel: existAccountCompany.companyModel,
+          companyEmployees: existAccountCompany.companyEmployees,
+          workingTime: existAccountCompany.workingTime,
+          workOverTime: existAccountCompany.workOverTime,
+          phone: existAccountCompany.phone,
+          description: existAccountCompany.description,
         };
 
         res.json({

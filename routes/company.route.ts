@@ -1,8 +1,13 @@
 const { Router } = require("express");
 import * as companyController from "../controllers/company.controller";
 import * as companyValidate from "../validates/company.validate";
+import multer from "multer";
+import { storage } from "../helpers/cloudinary.helper";
+import { verifyTokenCompany } from "../middlewares/auth.middleware";
 
 const router = Router();
+
+const upload = multer({ storage: storage });
 
 router.post(
   "/register",
@@ -11,5 +16,13 @@ router.post(
 );
 
 router.post("/login", companyValidate.loginPost, companyController.loginPost);
+
+router.patch(
+  "/profile",
+  verifyTokenCompany,
+  upload.single("logo"),
+  companyValidate.profilePatch,
+  companyController.profilePatch,
+);
 
 export default router;
