@@ -3,6 +3,7 @@ import AccountCompany from "../models/account-company.model";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { AccountRequest } from "../interfaces/request.interface";
+import Jobs from "../models/jobs.model";
 
 export const registerPost = async (req: Request, res: Response) => {
   try {
@@ -107,6 +108,36 @@ export const profilePatch = async (req: AccountRequest, res: Response) => {
     res.json({
       code: "success",
       message: "Đã cập nhật",
+    });
+  } catch (error) {
+    console.log(error);
+    res.json({
+      code: "error",
+      message: "Đã có lỗi xảy ra",
+    });
+  }
+};
+
+export const createJobPost = async (req: AccountRequest, res: Response) => {
+  try {
+    req.body.companyId = req.account.id;
+    req.body.salaryMin = req.body.salaryMin ? parseInt(req.body.salaryMin) : 0;
+    req.body.salaryMax = req.body.salaryMax ? parseInt(req.body.salaryMax) : 0;
+    req.body.technologies = req.body.technologies
+      ? req.body.technologies.split(",")
+      : [];
+    req.body.images = [];
+
+    for (const file of req.files as Express.Multer.File[]) {
+      req.body.images.push(file.path);
+    }
+
+    const newRecord = new Jobs(req.body);
+    await newRecord.save();
+
+    res.json({
+      code: "success",
+      message: "Đã tạo công việc",
     });
   } catch (error) {
     console.log(error);
