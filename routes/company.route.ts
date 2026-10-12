@@ -33,4 +33,6 @@ router.post(
   companyController.createJobPost,
 );
 
+router.get("/job/list", verifyTokenCompany, companyController.jobList);
+
 export default router;

@@ -147,3 +147,40 @@ export const createJobPost = async (req: AccountRequest, res: Response) => {
     });
   }
 };
+
+export const jobList = async (req: AccountRequest, res: Response) => {
+  try {
+    const id = req.account.id;
+
+    const jobs = await Jobs.find({
+      companyId: id,
+    }).sort({ createdAt: "desc" });
+
+    const dataFinal = [];
+
+    for (const item of jobs) {
+      const itemFinal = {
+        id: item._id,
+        title: item.title,
+        salaryMin: item.salaryMin,
+        salaryMax: item.salaryMax,
+        position: item.position,
+        workingForm: item.workingForm,
+        technologies: item.technologies,
+      };
+      dataFinal.push(itemFinal);
+    }
+
+    res.json({
+      code: "success",
+      message: "Thành công",
+      jobs: dataFinal,
+    });
+  } catch (error) {
+    console.log(error);
+    res.json({
+      code: "error",
+      message: "Đã có lỗi xảy ra",
+    });
+  }
+};
