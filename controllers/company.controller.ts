@@ -151,10 +151,31 @@ export const createJobPost = async (req: AccountRequest, res: Response) => {
 export const jobList = async (req: AccountRequest, res: Response) => {
   try {
     const id = req.account.id;
-
-    const jobs = await Jobs.find({
+    const find = {
       companyId: id,
-    }).sort({ createdAt: "desc" });
+    };
+
+    // Phân trang
+    const limitItems = 2;
+    let page = 1;
+    if (req.query.page && parseInt(`${req.query.page}`) > 0) {
+      page = parseInt(`${req.query.page}`);
+    }
+    const skip = (page - 1) * limitItems;
+    const totalRecord = await Jobs.countDocuments(find);
+    const totalPage = Math.ceil(totalRecord / limitItems);
+    const pagination = {
+      totalPage: totalPage,
+      totalRecord: totalRecord,
+      currentPage: page,
+      skip: skip,
+    };
+    // Hết phân trang
+
+    const jobs = await Jobs.find(find)
+      .limit(limitItems)
+      .skip(skip)
+      .sort({ createdAt: "desc" });
 
     const dataFinal = [];
 
@@ -175,6 +196,7 @@ export const jobList = async (req: AccountRequest, res: Response) => {
       code: "success",
       message: "Thành công",
       jobs: dataFinal,
+      pagination: pagination,
     });
   } catch (error) {
     console.log(error);
