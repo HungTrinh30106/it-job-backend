@@ -206,3 +206,24 @@ export const jobList = async (req: AccountRequest, res: Response) => {
     });
   }
 };
+
+export const jobDetail = async (req: AccountRequest, res: Response) => {
+  try {
+    const jobId = req.params.id;
+    const companyId = req.account.id;
+
+    const jobDetail = await Jobs.findOne({ _id: jobId, companyId: companyId });
+
+    res.json({
+      code: "success",
+      message: "Thành công",
+      jobDetail: jobDetail,
+    });
+  } catch (error) {
+    console.log(error);
+    res.json({
+      code: "error",
+      message: "Đã có lỗi xảy ra",
+    });
+  }
+};
