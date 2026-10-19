@@ -45,4 +45,10 @@ router.patch(
   companyController.editJobPatch,
 );
 
+router.delete(
+  "/job/delete/:id",
+  verifyTokenCompany,
+  companyController.deleteJobDel,
+);
+
 export default router;
