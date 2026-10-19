@@ -37,4 +37,12 @@ router.get("/job/list", verifyTokenCompany, companyController.jobList);
 
 router.get("/job/detail/:id", verifyTokenCompany, companyController.jobDetail);
 
+router.patch(
+  "/job/edit/:id",
+  verifyTokenCompany,
+  upload.array("images", 3),
+  companyValidate.editJobPatch,
+  companyController.editJobPatch,
+);
+
 export default router;

@@ -227,3 +227,44 @@ export const jobDetail = async (req: AccountRequest, res: Response) => {
     });
   }
 };
+
+export const editJobPatch = async (req: AccountRequest, res: Response) => {
+  try {
+    const jobId = req.params.id;
+    const companyId = req.account.id;
+
+    const existJob = await Jobs.findOne({ _id: jobId, companyId: companyId });
+
+    if (!existJob) {
+      res.json({
+        code: "error",
+        message: "Công việc không tồn tại",
+      });
+      return;
+    }
+
+    req.body.salaryMin = req.body.salaryMin ? parseInt(req.body.salaryMin) : 0;
+    req.body.salaryMax = req.body.salaryMax ? parseInt(req.body.salaryMax) : 0;
+    req.body.technologies = req.body.technologies
+      ? req.body.technologies.split(",")
+      : [];
+    req.body.images = [];
+
+    for (const file of req.files as Express.Multer.File[]) {
+      req.body.images.push(file.path);
+    }
+
+    await Jobs.updateOne({ _id: jobId }, req.body);
+
+    res.json({
+      code: "success",
+      message: "Đã cập nhật",
+    });
+  } catch (error) {
+    console.log(error);
+    res.json({
+      code: "error",
+      message: "Đã có lỗi xảy ra",
+    });
+  }
+};
