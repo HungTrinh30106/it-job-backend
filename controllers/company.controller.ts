@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { AccountRequest } from "../interfaces/request.interface";
 import Jobs from "../models/jobs.model";
+import CityList from "../models/city-list.model";
 
 export const registerPost = async (req: Request, res: Response) => {
   try {
@@ -289,6 +290,52 @@ export const deleteJobDel = async (req: AccountRequest, res: Response) => {
     res.json({
       code: "success",
       message: "Đã xóa",
+    });
+  } catch (error) {
+    console.log(error);
+    res.json({
+      code: "error",
+      message: "Đã có lỗi xảy ra",
+    });
+  }
+};
+
+export const list = async (req: Request, res: Response) => {
+  try {
+    let limitItems = 20;
+    if (req.query.limitItem && parseInt(`${req.query.limitItem}`) > 0) {
+      limitItems = parseInt(`${req.query.limitItem}`);
+    }
+
+    const companyList = await AccountCompany.find({})
+      .limit(limitItems)
+      .sort({ createdAt: "desc" });
+
+    const dataFinal = [];
+
+    for (const item of companyList) {
+      const city = await CityList.findOne({
+        _id: item.city,
+      });
+
+      const totalJob = await Jobs.countDocuments({
+        companyId: item._id.toString(),
+      });
+
+      const itemFinal = {
+        id: item._id,
+        logo: item.logo,
+        companyName: item.companyName,
+        city: city ? city.name : "",
+        totalJob: totalJob,
+      };
+      dataFinal.push(itemFinal);
+    }
+
+    res.json({
+      code: "success",
+      message: "Danh sách cong ty",
+      companyList: dataFinal,
     });
   } catch (error) {
     console.log(error);
