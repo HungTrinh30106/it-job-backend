@@ -125,7 +125,7 @@ export const createJobPost = async (req: AccountRequest, res: Response) => {
     req.body.salaryMin = req.body.salaryMin ? parseInt(req.body.salaryMin) : 0;
     req.body.salaryMax = req.body.salaryMax ? parseInt(req.body.salaryMax) : 0;
     req.body.technologies = req.body.technologies
-      ? req.body.technologies.split(",")
+      ? req.body.technologies.split(", ")
       : [];
     req.body.images = [];
 
