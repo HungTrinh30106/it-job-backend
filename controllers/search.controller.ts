@@ -78,7 +78,7 @@ export const search = async (req: Request, res: Response) => {
             id: item._id,
             companyLogo: companyInfo.logo,
             title: item.title,
-            comanyName: companyInfo.companyName,
+            companyName: companyInfo.companyName,
             salaryMin: item.salaryMin,
             salaryMax: item.salaryMax,
             position: item.position,
