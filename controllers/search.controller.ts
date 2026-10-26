@@ -6,6 +6,7 @@ import CityList from "../models/city-list.model";
 export const search = async (req: Request, res: Response) => {
   try {
     const dataFinal: any = [];
+    let pagination: any = {};
 
     if (Object.keys(req.query).length > 0) {
       const find: any = {};
@@ -44,7 +45,27 @@ export const search = async (req: Request, res: Response) => {
         find.workingForm = req.query.workingForm;
       }
 
-      const jobs = await Jobs.find(find).sort({ createdAt: "desc" });
+      // Phân trang
+      const limitItems = 2;
+      let page = 1;
+      if (req.query.page && parseInt(`${req.query.page}`) > 0) {
+        page = parseInt(`${req.query.page}`);
+      }
+      const skip = (page - 1) * limitItems;
+      const totalRecord = await Jobs.countDocuments(find);
+      const totalPage = Math.ceil(totalRecord / limitItems);
+      pagination = {
+        totalPage: totalPage,
+        totalRecord: totalRecord,
+        currentPage: page,
+        skip: skip,
+      };
+      // Hết phân trang
+
+      const jobs = await Jobs.find(find)
+        .limit(limitItems)
+        .skip(skip)
+        .sort({ createdAt: "desc" });
 
       for (const item of jobs) {
         const companyInfo = await AccountCompany.findOne({
@@ -74,6 +95,7 @@ export const search = async (req: Request, res: Response) => {
       code: "success",
       message: "Thành công",
       jobs: dataFinal,
+      pagination: pagination,
     });
   } catch (error) {
     console.log(error);
