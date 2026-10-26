@@ -364,3 +364,70 @@ export const list = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const detail = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id;
+
+    const existCompany = await AccountCompany.findOne({ _id: id });
+
+    if (!existCompany) {
+      res.json({
+        code: "error",
+        message: "Công ty không tồn tại",
+      });
+      return;
+    }
+
+    const city = await CityList.findOne({ _id: existCompany.city });
+
+    // Lấy chi tiết công ty
+    const companyDetail = {
+      companyName: existCompany.companyName,
+      logo: existCompany.logo,
+      address: existCompany.address,
+      city: city ? city.name : "",
+      companyModel: existCompany.companyModel,
+      companyEmployees: existCompany.companyEmployees,
+      workingTime: existCompany.workingTime,
+      workOverTime: existCompany.workOverTime,
+      description: existCompany.description,
+    };
+
+    // Lấy ra danh sách công việc
+    const jobs = await Jobs.find({ companyId: id }).sort({ createdAt: "desc" });
+
+    const cityInfo = await CityList.findOne({ _id: existCompany?.city });
+
+    let dataFinal = [];
+
+    for (const item of jobs) {
+      const itemFinal = {
+        id: item._id,
+        companyLogo: existCompany.logo,
+        title: item.title,
+        companyName: existCompany.companyName,
+        salaryMin: item.salaryMin,
+        salaryMax: item.salaryMax,
+        position: item.position,
+        workingForm: item.workingForm,
+        cityName: cityInfo?.name,
+        technologies: item.technologies,
+      };
+      dataFinal.push(itemFinal);
+    }
+
+    res.json({
+      code: "success",
+      message: "Thành công",
+      companyDetail: companyDetail,
+      jobList: dataFinal,
+    });
+  } catch (error) {
+    console.log(error);
+    res.json({
+      code: "error",
+      message: "Đã có lỗi xảy ra",
+    });
+  }
+};
