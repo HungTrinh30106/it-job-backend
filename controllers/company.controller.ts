@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import { AccountRequest } from "../interfaces/request.interface";
 import Jobs from "../models/jobs.model";
 import CityList from "../models/city-list.model";
+import CV from "../models/cv.model";
 
 export const registerPost = async (req: Request, res: Response) => {
   try {
@@ -422,6 +423,49 @@ export const detail = async (req: Request, res: Response) => {
       message: "Thành công",
       companyDetail: companyDetail,
       jobList: dataFinal,
+    });
+  } catch (error) {
+    console.log(error);
+    res.json({
+      code: "error",
+      message: "Đã có lỗi xảy ra",
+    });
+  }
+};
+
+export const cvList = async (req: AccountRequest, res: Response) => {
+  try {
+    const companyId = req.account.id;
+    const jobList = await Jobs.find({ companyId });
+    const jobIds = jobList.map((job) => String(job._id));
+    const cvs = await CV.find({ jobId: { $in: jobIds } }).sort({
+      createdAt: "desc",
+    });
+
+    const dataFinal = cvs.map((item) => {
+      const jobInfo = jobList.find(
+        (job) => String(job._id) === String(item.jobId),
+      );
+
+      return {
+        id: String(item._id),
+        jobTitle: jobInfo?.title ?? "Công việc đã bị xóa",
+        fullName: item.fullName,
+        email: item.email,
+        phone: item.phone,
+        salaryMin: jobInfo?.salaryMin ?? 0,
+        salaryMax: jobInfo?.salaryMax ?? 0,
+        position: jobInfo?.position ?? "",
+        workingForm: jobInfo?.workingForm ?? "",
+        viewed: item.viewed,
+        status: item.status,
+      };
+    });
+
+    res.json({
+      code: "success",
+      message: "Danh sách CV",
+      cvs: dataFinal,
     });
   } catch (error) {
     console.log(error);
