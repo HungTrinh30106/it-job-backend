@@ -6,6 +6,7 @@ import { AccountRequest } from "../interfaces/request.interface";
 import Jobs from "../models/jobs.model";
 import CityList from "../models/city-list.model";
 import CV from "../models/cv.model";
+import moment from "moment";
 
 export const registerPost = async (req: Request, res: Response) => {
   try {
@@ -435,43 +436,72 @@ export const detail = async (req: Request, res: Response) => {
 
 export const cvList = async (req: AccountRequest, res: Response) => {
   try {
-    const companyId = req.account.id;
-    const jobList = await Jobs.find({ companyId });
-    const jobIds = jobList.map((job) => String(job._id));
-    const cvs = await CV.find({ jobId: { $in: jobIds } }).sort({
+    const id = req.account.id;
+
+    // Danh sách id công việc của công ty
+    const jobList: any = await Jobs.find({
+      companyId: id,
+    });
+    const idJobList = jobList?.map((item: any) => item.id);
+
+    const find = {
+      jobId: { $in: idJobList },
+    };
+
+    // Phân trang
+    const limitItems = 4;
+    let page = 1;
+    if (req.query.page && parseInt(`${req.query.page}`) > 0) {
+      page = parseInt(`${req.query.page}`);
+    }
+    const skip = (page - 1) * limitItems;
+    const totalRecord = await CV.countDocuments(find);
+    const totalPage = Math.ceil(totalRecord / limitItems);
+    const pagination = {
+      totalPage: totalPage,
+      totalRecord: totalRecord,
+      skip: skip,
+      currentPage: page,
+    };
+    // Hết Phân trang
+
+    const cvs = await CV.find(find).limit(limitItems).skip(skip).sort({
       createdAt: "desc",
     });
 
-    const dataFinal = cvs.map((item) => {
-      const jobInfo = jobList.find(
-        (job) => String(job._id) === String(item.jobId),
-      );
+    const dataFinal = [];
 
-      return {
-        id: String(item._id),
-        jobTitle: jobInfo?.title ?? "Công việc đã bị xóa",
+    for (const item of cvs) {
+      const jobInfo = jobList.find((job: any) => job.id == item.jobId);
+
+      const itemFinal = {
+        id: item.id,
+        jobTitle: jobInfo.title,
         fullName: item.fullName,
         email: item.email,
         phone: item.phone,
-        salaryMin: jobInfo?.salaryMin ?? 0,
-        salaryMax: jobInfo?.salaryMax ?? 0,
-        position: jobInfo?.position ?? "",
-        workingForm: jobInfo?.workingForm ?? "",
+        salaryMin: jobInfo.salaryMin,
+        salaryMax: jobInfo.salaryMax,
+        position: jobInfo.position,
+        workingForm: jobInfo.workingForm,
         viewed: item.viewed,
         status: item.status,
+        createdAt: moment(item.createdAt).format("HH:mm:ss - DD/MM/YYYY"),
       };
-    });
+      dataFinal.push(itemFinal);
+    }
 
     res.json({
       code: "success",
-      message: "Danh sách CV",
-      cvs: dataFinal,
+      message: "Thành công!",
+      cvList: dataFinal,
+      pagination: pagination,
     });
   } catch (error) {
     console.log(error);
     res.json({
       code: "error",
-      message: "Đã có lỗi xảy ra",
+      message: "Không lấy được dữ liệu!",
     });
   }
 };
