@@ -57,4 +57,6 @@ router.get("/detail/:id", companyController.detail);
 
 router.get("/cv/list", verifyTokenCompany, companyController.cvList);
 
+router.get("/cv/detail/:id", verifyTokenCompany, companyController.cvDetail);
+
 export default router;

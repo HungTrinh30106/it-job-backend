@@ -438,10 +438,9 @@ export const cvList = async (req: AccountRequest, res: Response) => {
   try {
     const id = req.account.id;
 
-    // Danh sách id công việc của công ty
-    const jobList: any = await Jobs.find({
-      companyId: id,
-    });
+    // Lấy ra danh sách công cv của công ty
+    const jobList: any = await Jobs.find({ companyId: id });
+
     const idJobList = jobList?.map((item: any) => item.id);
 
     const find = {
@@ -449,7 +448,7 @@ export const cvList = async (req: AccountRequest, res: Response) => {
     };
 
     // Phân trang
-    const limitItems = 4;
+    const limitItems = 3;
     let page = 1;
     if (req.query.page && parseInt(`${req.query.page}`) > 0) {
       page = parseInt(`${req.query.page}`);
@@ -465,13 +464,14 @@ export const cvList = async (req: AccountRequest, res: Response) => {
     };
     // Hết Phân trang
 
-    const cvs = await CV.find(find).limit(limitItems).skip(skip).sort({
-      createdAt: "desc",
-    });
+    const cvList = await CV.find(find)
+      .limit(limitItems)
+      .skip(skip)
+      .sort({ createdAt: "desc" });
 
     const dataFinal = [];
 
-    for (const item of cvs) {
+    for (const item of cvList) {
       const jobInfo = jobList.find((job: any) => job.id == item.jobId);
 
       const itemFinal = {
@@ -496,6 +496,58 @@ export const cvList = async (req: AccountRequest, res: Response) => {
       message: "Thành công!",
       cvList: dataFinal,
       pagination: pagination,
+    });
+  } catch (error) {
+    console.log(error);
+    res.json({
+      code: "error",
+      message: "Không lấy được dữ liệu!",
+    });
+  }
+};
+
+export const cvDetail = async (req: AccountRequest, res: Response) => {
+  try {
+    const id = req.params.id;
+    const companyId = req.account.id;
+
+    const cv: any = await CV.findOne({ _id: id });
+    if (!cv) {
+      return res.json({
+        code: "error",
+        message: "Không tìm thấy CV!",
+      });
+    }
+
+    const jobInfo: any = await Jobs.findOne({
+      _id: cv.jobId,
+      companyId: companyId,
+    });
+    if (!jobInfo) {
+      res.json({
+        code: "error",
+        message: "Không tìm thấy công việc!",
+      });
+    }
+
+    const itemFinal = {
+      fullName: cv.fullName,
+      email: cv.email,
+      phone: cv.phone,
+      fileCV: cv.fileCV,
+      jobTitle: jobInfo.title,
+      salaryMin: jobInfo.salaryMin,
+      salaryMax: jobInfo.salaryMax,
+      position: jobInfo.position,
+      workingForm: jobInfo.workingForm,
+      technologies: jobInfo.technologies,
+      jobId: jobInfo.id,
+    };
+
+    res.json({
+      code: "success",
+      message: "Thành công!",
+      cvDetail: itemFinal,
     });
   } catch (error) {
     console.log(error);
