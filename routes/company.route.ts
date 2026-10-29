@@ -59,4 +59,12 @@ router.get("/cv/list", verifyTokenCompany, companyController.cvList);
 
 router.get("/cv/detail/:id", verifyTokenCompany, companyController.cvDetail);
 
+router.delete("/cv/delete/:id", verifyTokenCompany, companyController.cvDelete);
+
+router.patch(
+  "/cv/change-status/:id",
+  verifyTokenCompany,
+  companyController.changeStatusPatch,
+);
+
 export default router;

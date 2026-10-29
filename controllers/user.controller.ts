@@ -3,6 +3,10 @@ import AccountUser from "../models/account-user.model";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { AccountRequest } from "../interfaces/request.interface";
+import CV from "../models/cv.model";
+import AccountCompany from "../models/account-company.model";
+import Jobs from "../models/jobs.model";
+import moment from "moment";
 
 export const registerPost = async (req: Request, res: Response) => {
   try {
@@ -107,6 +111,81 @@ export const profilePatch = async (req: AccountRequest, res: Response) => {
     res.json({
       code: "success",
       message: "Đã cập nhật",
+    });
+  } catch (error) {
+    console.log(error);
+    res.json({
+      code: "error",
+      message: "Đã có lỗi xảy ra",
+    });
+  }
+};
+
+export const cvList = async (req: AccountRequest, res: Response) => {
+  try {
+    const email = req.account.email;
+
+    const find = {
+      email: email,
+    };
+
+    // Phân trang
+    const limitItems = 2;
+    let page = 1;
+    if (req.query.page && parseInt(`${req.query.page}`) > 0) {
+      page = parseInt(`${req.query.page}`);
+    }
+    const skip = (page - 1) * limitItems;
+    const totalRecord = await CV.countDocuments(find);
+    const totalPage = Math.ceil(totalRecord / limitItems);
+    const pagination = {
+      totalPage: totalPage,
+      totalRecord: totalRecord,
+      skip: skip,
+      currentPage: page,
+    };
+    // Hết Phân trang
+
+    const cvList = await CV.find(find).limit(limitItems).skip(skip).sort({
+      createdAt: "desc",
+    });
+
+    if (!cvList) {
+      return res.json({
+        code: "error",
+        message: "Không tìm thấy CV! ",
+      });
+    }
+
+    const dataFinal = [];
+
+    for (const item of cvList) {
+      const jobInfo = await Jobs.findOne({ _id: item.jobId });
+      const companyInfo = await AccountCompany.findOne({
+        _id: jobInfo?.companyId,
+      });
+
+      if (jobInfo && companyInfo) {
+        const itemFinal = {
+          id: item.id,
+          jobTitle: jobInfo.title,
+          companyName: companyInfo.companyName,
+          salaryMin: jobInfo.salaryMin,
+          salaryMax: jobInfo.salaryMax,
+          position: jobInfo.position,
+          workingForm: jobInfo.workingForm,
+          status: item.status,
+          createdAt: moment(item.createdAt).format("HH:mm:ss - DD/MM/YYYY"),
+        };
+        dataFinal.push(itemFinal);
+      }
+    }
+
+    res.json({
+      code: "success",
+      message: "Danh sách cv",
+      cvList: dataFinal,
+      pagination: pagination,
     });
   } catch (error) {
     console.log(error);

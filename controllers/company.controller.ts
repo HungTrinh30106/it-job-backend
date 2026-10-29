@@ -448,7 +448,7 @@ export const cvList = async (req: AccountRequest, res: Response) => {
     };
 
     // Phân trang
-    const limitItems = 3;
+    const limitItems = 6;
     let page = 1;
     if (req.query.page && parseInt(`${req.query.page}`) > 0) {
       page = parseInt(`${req.query.page}`);
@@ -530,6 +530,17 @@ export const cvDetail = async (req: AccountRequest, res: Response) => {
       });
     }
 
+    if (!cv.viewed) {
+      await CV.updateOne(
+        {
+          _id: id,
+        },
+        {
+          viewed: true,
+        },
+      );
+    }
+
     const itemFinal = {
       fullName: cv.fullName,
       email: cv.email,
@@ -548,6 +559,44 @@ export const cvDetail = async (req: AccountRequest, res: Response) => {
       code: "success",
       message: "Thành công!",
       cvDetail: itemFinal,
+    });
+  } catch (error) {
+    console.log(error);
+    res.json({
+      code: "error",
+      message: "Không lấy được dữ liệu!",
+    });
+  }
+};
+
+export const cvDelete = async (req: AccountRequest, res: Response) => {
+  try {
+    const id = req.params.id;
+
+    await CV.deleteOne({ _id: id });
+
+    res.json({
+      code: "success",
+      message: "Đã xóa CV!",
+    });
+  } catch (error) {
+    console.log(error);
+    res.json({
+      code: "error",
+      message: "Không lấy được dữ liệu!",
+    });
+  }
+};
+
+export const changeStatusPatch = async (req: AccountRequest, res: Response) => {
+  try {
+    const id = req.params.id;
+
+    await CV.updateOne({ _id: id }, { status: req.body.status });
+
+    res.json({
+      code: "success",
+      message: "Đã cập nhật!",
     });
   } catch (error) {
     console.log(error);
