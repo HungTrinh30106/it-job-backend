@@ -261,9 +261,19 @@ export const cvDelete = async (req: AccountRequest, res: Response) => {
   try {
     const id = req.params.id;
 
-    await CV.deleteOne({ _id: id });
+    const deletedCV = await CV.findOneAndDelete({
+      _id: id,
+      email: req.account.email,
+    });
 
-    res.json({
+    if (!deletedCV) {
+      return res.status(404).json({
+        code: "error",
+        message: "Không tìm thấy CV!",
+      });
+    }
+
+    return res.json({
       code: "success",
       message: "Đã xóa CV! ",
     });

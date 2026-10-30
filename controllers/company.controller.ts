@@ -8,6 +8,20 @@ import CityList from "../models/city-list.model";
 import CV from "../models/cv.model";
 import moment from "moment";
 
+const findCVForCompany = async (cvId: string, companyId: string) => {
+  const cv = await CV.findById(cvId);
+  if (!cv) {
+    return null;
+  }
+
+  const job = await Jobs.findOne({
+    _id: cv.jobId,
+    companyId: companyId,
+  });
+
+  return job ? cv : null;
+};
+
 export const registerPost = async (req: Request, res: Response) => {
   try {
     const existAccount = await AccountCompany.findOne({
@@ -524,7 +538,7 @@ export const cvDetail = async (req: AccountRequest, res: Response) => {
       companyId: companyId,
     });
     if (!jobInfo) {
-      res.json({
+      return res.status(404).json({
         code: "error",
         message: "Không tìm thấy công việc!",
       });
@@ -572,10 +586,32 @@ export const cvDetail = async (req: AccountRequest, res: Response) => {
 export const cvDelete = async (req: AccountRequest, res: Response) => {
   try {
     const id = req.params.id;
+    const companyId = req.account.id;
 
-    await CV.deleteOne({ _id: id });
+    if (typeof id !== "string") {
+      return res.status(400).json({
+        code: "error",
+        message: "ID CV không hợp lệ!",
+      });
+    }
 
-    res.json({
+    const cv = await findCVForCompany(id, companyId);
+    if (!cv) {
+      return res.status(404).json({
+        code: "error",
+        message: "Không tìm thấy CV!",
+      });
+    }
+
+    const result = await CV.deleteOne({ _id: cv._id });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({
+        code: "error",
+        message: "Không tìm thấy CV!",
+      });
+    }
+
+    return res.json({
       code: "success",
       message: "Đã xóa CV!",
     });
@@ -591,10 +627,44 @@ export const cvDelete = async (req: AccountRequest, res: Response) => {
 export const changeStatusPatch = async (req: AccountRequest, res: Response) => {
   try {
     const id = req.params.id;
+    const companyId = req.account.id;
+    const allowedStatuses = ["initial", "approved", "rejected"];
+    const status = req.body.status;
 
-    await CV.updateOne({ _id: id }, { status: req.body.status });
+    if (typeof status !== "string" || !allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        code: "error",
+        message: "Trạng thái CV không hợp lệ!",
+      });
+    }
 
-    res.json({
+    if (typeof id !== "string") {
+      return res.status(400).json({
+        code: "error",
+        message: "ID CV không hợp lệ!",
+      });
+    }
+
+    const cv = await findCVForCompany(id, companyId);
+    if (!cv) {
+      return res.status(404).json({
+        code: "error",
+        message: "Không tìm thấy CV!",
+      });
+    }
+
+    const result = await CV.updateOne(
+      { _id: cv._id },
+      { $set: { status: status } },
+    );
+    if (result.matchedCount === 0) {
+      return res.status(404).json({
+        code: "error",
+        message: "Không tìm thấy CV!",
+      });
+    }
+
+    return res.json({
       code: "success",
       message: "Đã cập nhật!",
     });
