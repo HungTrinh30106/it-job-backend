@@ -195,3 +195,83 @@ export const cvList = async (req: AccountRequest, res: Response) => {
     });
   }
 };
+
+export const cvDetail = async (req: AccountRequest, res: Response) => {
+  try {
+    const email = req.account.email;
+
+    const account = await AccountUser.findOne({ email: email });
+    if (!account) {
+      return res.json({
+        code: "error",
+        message: "Không tìm thấy tài khoản! ",
+      });
+    }
+
+    const find = {
+      email: email,
+      _id: req.params.id,
+    };
+
+    const cv = await CV.findOne(find);
+    if (!cv) {
+      return res.json({
+        code: "error",
+        message: "Không tìm thấy CV! ",
+      });
+    }
+
+    const jobInfo = await Jobs.findOne({ _id: cv.jobId });
+    const companyInfo = await AccountCompany.findOne({
+      _id: jobInfo?.companyId,
+    });
+
+    if (jobInfo && companyInfo) {
+      const dataFinal = {
+        id: cv.id,
+        fullName: account.fullName,
+        email: account.email,
+        phone: account.phone,
+        fileCV: cv.fileCV,
+        jobTitle: jobInfo.title,
+        jobId: jobInfo.id,
+        companyName: companyInfo.companyName,
+        salaryMin: jobInfo.salaryMin,
+        salaryMax: jobInfo.salaryMax,
+        technologies: jobInfo.technologies,
+        position: jobInfo.position,
+        workingForm: jobInfo.workingForm,
+      };
+      res.json({
+        code: "success",
+        message: "Chi tiết cv",
+        cvDetail: dataFinal,
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.json({
+      code: "error",
+      message: "Đã có lỗi xảy ra",
+    });
+  }
+};
+
+export const cvDelete = async (req: AccountRequest, res: Response) => {
+  try {
+    const id = req.params.id;
+
+    await CV.deleteOne({ _id: id });
+
+    res.json({
+      code: "success",
+      message: "Đã xóa CV! ",
+    });
+  } catch (error) {
+    console.log(error);
+    res.json({
+      code: "error",
+      message: "Đã có lỗi xảy ra",
+    });
+  }
+};

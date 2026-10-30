@@ -27,4 +27,8 @@ router.patch(
 
 router.get("/cv/list", verifyTokenUser, userController.cvList);
 
+router.get("/cv/detail/:id", verifyTokenUser, userController.cvDetail);
+
+router.delete("/cv/delete/:id", verifyTokenUser, userController.cvDelete);
+
 export default router;
